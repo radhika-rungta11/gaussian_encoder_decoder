@@ -1,0 +1,4 @@
+input_path,encoded_path,num_gaussians,raw_float32_bytes,ply_equivalent_bytes,input_file_bytes,encoded_file_bytes,ratio_vs_raw_float32,ratio_vs_ply_equivalent,ratio_vs_input_file,seconds_load_raw,seconds_encode,seconds_decode_encoded
+benchmark_inputs/point_cloud_pp (1).npz,benchmark_results/point_cloud_pp (1).encoded.npz,165504,21184512,52299264,7885398,6680970,3.1708736904970385,7.828094423414564,1.1802774148065325,3.8,0.21,0.032
+benchmark_inputs/point_cloud_pp (2).npz,benchmark_results/point_cloud_pp (2).encoded.npz,55581,7114368,17563596,3125678,2285114,3.113353644500887,7.686091809861565,1.3678433548610704,0.899,0.062,0.011
+benchmark_inputs/point_cloud_pp.npz,benchmark_results/point_cloud_pp.encoded.npz,15556,1991168,4915696,947886,683498,2.9132023795241535,7.191968374450254,1.3868160550579518,0.233,0.019,0.004

@@ -36,10 +36,27 @@ def _extract_rgb_array(rgb_payload, num_points):
 
 
 def _decode_rvq_feature(data, value_key, table_key, codebook_key, num_points, num_quantizers, rvq_bit):
-    bitstream = _decode_huffman_payload(data, value_key, table_key)
-    indices = _unpack_rvq_indices(bitstream, num_points, int(num_quantizers), int(rvq_bit))
+    symbols = _decode_huffman_payload(data, value_key, table_key)
+    indices = _decode_rvq_indices(symbols, num_points, int(num_quantizers), int(rvq_bit))
     codebook = _extract_rvq_codebook(data[codebook_key])
     return decode_rvq(indices, codebook).astype(np.float32)
+
+
+def _decode_rvq_indices(symbols, num_points, num_quantizers, rvq_bit):
+    """
+    Two on-disk layouts exist in the wild:
+      1. Huffman alphabet IS the RVQ index alphabet (one symbol per index).
+      2. Huffman alphabet is bytes (0-255), and the byte stream is the bit-packed
+         indices that need np.unpackbits to recover.
+    Detect which one by checking whether the symbol count matches the expected
+    index count.
+    """
+    expected = num_points * num_quantizers
+    max_index_value = (1 << int(rvq_bit)) - 1
+    if symbols.size == expected and int(symbols.max(initial=0)) <= max_index_value:
+        return symbols.reshape(num_points, num_quantizers).astype(np.int32)
+    byte_stream = symbols.astype(np.uint8)
+    return _unpack_rvq_indices(byte_stream, num_points, int(num_quantizers), int(rvq_bit))
 
 
 def _decode_quantized_scalar_feature(data, value_key, table_key, minmax_key):
@@ -107,11 +124,13 @@ def _derive_rgb_from_feature_network(scene, data):
 
 def _decode_huffman_payload(data, value_key, table_key):
     """
-    Decode a Huffman-coded uint8 payload stored in the NPZ.
+    Decode a Huffman-coded payload stored in the NPZ. Returns int32 because
+    the alphabet can be larger than 256 entries (RVQ indices for codebooks
+    with rvq_bit > 8).
     """
     codec = PrefixCodec(data[table_key].item())
     decoded = codec.decode(data[value_key])
-    return np.asarray(decoded, dtype=np.uint8)
+    return np.asarray(decoded, dtype=np.int32)
 
 
 def _extract_rvq_codebook(codebook_payload):
@@ -146,6 +165,8 @@ def _extract_rvq_codebook(codebook_payload):
 def _unpack_rvq_indices(bitstream, num_points, num_quantizers, rvq_bit):
     """
     Recover RVQ indices from the bit-packed byte stream saved in the NPZ.
+    Handles any rvq_bit (including codebooks larger than 256 entries, which
+    need rvq_bit > 8 and therefore can't fit a single uint8 byte).
     """
     required_bits = num_points * num_quantizers * rvq_bit
     bits = np.unpackbits(np.asarray(bitstream, dtype=np.uint8), bitorder='little')
@@ -156,8 +177,10 @@ def _unpack_rvq_indices(bitstream, num_points, num_quantizers, rvq_bit):
             f"RVQ bitstream is too short: expected {required_bits} bits, got {bits.size}."
         )
 
-    packed = np.packbits(bits.reshape(-1, rvq_bit), axis=-1, bitorder='little')
-    return packed.reshape(num_points, num_quantizers).astype(np.int32)
+    bit_matrix = bits.reshape(-1, rvq_bit).astype(np.int32)
+    weights = (1 << np.arange(rvq_bit, dtype=np.int32))
+    indices = (bit_matrix * weights[None, :]).sum(axis=1)
+    return indices.reshape(num_points, num_quantizers)
 
 
 def _normalize_quaternion(rotation):
@@ -293,16 +316,16 @@ def decode_scene(npz_file_path, decode_auxiliary_properties=False):
         rvq_num, rvq_bit = data[rvq_info_key].astype(np.int32)
 
         if {'scale', 'huftable_scale', 'codebook_scale'}.issubset(data.files):
-            scale_bitstream = _decode_huffman_payload(data, 'scale', 'huftable_scale')
-            scale_indices = _unpack_rvq_indices(scale_bitstream, num_points, int(rvq_num), int(rvq_bit))
+            scale_symbols = _decode_huffman_payload(data, 'scale', 'huftable_scale')
+            scale_indices = _decode_rvq_indices(scale_symbols, num_points, int(rvq_num), int(rvq_bit))
             scale_codebook = _extract_rvq_codebook(data['codebook_scale'])
             scene.scale = decode_rvq(scale_indices, scale_codebook).astype(np.float32)
             scene.scale = np.clip(scene.scale, 1e-6, None)
             print(f"Decoded scale: {scene.scale.shape}")
 
         if {'rotation', 'huftable_rotation', 'codebook_rotation'}.issubset(data.files):
-            rotation_bitstream = _decode_huffman_payload(data, 'rotation', 'huftable_rotation')
-            rotation_indices = _unpack_rvq_indices(rotation_bitstream, num_points, int(rvq_num), int(rvq_bit))
+            rotation_symbols = _decode_huffman_payload(data, 'rotation', 'huftable_rotation')
+            rotation_indices = _decode_rvq_indices(rotation_symbols, num_points, int(rvq_num), int(rvq_bit))
             rotation_codebook = _extract_rvq_codebook(data['codebook_rotation'])
             scene.rotation = decode_rvq(rotation_indices, rotation_codebook).astype(np.float32)
             scene.rotation = _normalize_quaternion(scene.rotation)

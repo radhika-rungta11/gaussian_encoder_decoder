@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Gaussian Encoder/Decoder Benchmark</title>
+<style>
+  :root { color-scheme: light; }
+  body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 32px; color: #0f172a; background: #f8fafc; }
+  h1 { margin: 0 0 4px 0; font-size: 22px; }
+  h2 { font-size: 16px; margin: 32px 0 12px; color: #334155; }
+  .sub { color: #64748b; font-size: 13px; margin-bottom: 24px; }
+  .stats { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
+  .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; min-width: 180px; }
+  .card .label { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.06em; }
+  .card .value { font-size: 20px; font-weight: 600; margin-top: 2px; }
+  .panel { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: left; }
+  th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; background: #f1f5f9; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  svg { width: 100%; height: auto; }
+  footer { margin-top: 32px; font-size: 12px; color: #94a3b8; }
+</style>
+</head>
+<body>
+  <h1>Gaussian Encoder / Decoder — Benchmark Report</h1>
+  <div class="sub">Quantization-based encoder, decoder, and renderer pipeline applied to raw <code>.npz</code> checkpoints.</div>
+
+  <div class="stats">
+    <div class="card"><div class="label">Files benchmarked</div><div class="value">3</div></div>
+    <div class="card"><div class="label">Total Gaussians</div><div class="value">236,641</div></div>
+    <div class="card"><div class="label">PLY equiv. (paper)</div><div class="value">71.3 MB</div></div>
+    <div class="card"><div class="label">Input on disk (total)</div><div class="value">11.4 MB</div></div>
+    <div class="card"><div class="label">Encoded on disk (total)</div><div class="value">9.2 MB</div></div>
+    <div class="card"><div class="label">Overall vs PLY</div><div class="value">7.75×</div></div>
+  </div>
+
+  <h2>Sizes per scene</h2>
+  <div class="panel"><svg viewBox="0 0 900 312" xmlns="http://www.w3.org/2000/svg" font-family="ui-sans-serif, system-ui">
+<text x="248" y="53.0" text-anchor="end" font-size="13" fill="#0f172a" dominant-baseline="middle"><tspan font-weight="600">point_cloud_pp (1).npz</tspan>  <tspan fill="#64748b">(165,504 pts)</tspan></text>
+<rect x="260" y="22" width="500.0" height="16" fill="#94a3b8" rx="3"/>
+<text x="766.0" y="31.0" font-size="11" fill="#0f172a" dominant-baseline="middle">49.9 MB</text>
+<rect x="260" y="44" width="75.4" height="16" fill="#60a5fa" rx="3"/>
+<text x="341.38727504845957" y="53.0" font-size="11" fill="#0f172a" dominant-baseline="middle">7.5 MB</text>
+<rect x="260" y="66" width="63.9" height="16" fill="#22c55e" rx="3"/>
+<text x="329.8725049744486" y="75.0" font-size="11" fill="#0f172a" dominant-baseline="middle">6.4 MB</text>
+<text x="248" y="137.0" text-anchor="end" font-size="13" fill="#0f172a" dominant-baseline="middle"><tspan font-weight="600">point_cloud_pp (2).npz</tspan>  <tspan fill="#64748b">(55,581 pts)</tspan></text>
+<rect x="260" y="106" width="167.9" height="16" fill="#94a3b8" rx="3"/>
+<text x="433.91437064965197" y="115.0" font-size="11" fill="#0f172a" dominant-baseline="middle">16.7 MB</text>
+<rect x="260" y="128" width="29.9" height="16" fill="#60a5fa" rx="3"/>
+<text x="295.8826193806475" y="137.0" font-size="11" fill="#0f172a" dominant-baseline="middle">3.0 MB</text>
+<rect x="260" y="150" width="21.8" height="16" fill="#22c55e" rx="3"/>
+<text x="287.8465215877608" y="159.0" font-size="11" fill="#0f172a" dominant-baseline="middle">2.2 MB</text>
+<text x="248" y="221.0" text-anchor="end" font-size="13" fill="#0f172a" dominant-baseline="middle"><tspan font-weight="600">point_cloud_pp.npz</tspan>  <tspan fill="#64748b">(15,556 pts)</tspan></text>
+<rect x="260" y="190" width="47.0" height="16" fill="#94a3b8" rx="3"/>
+<text x="312.9958430007734" y="199.0" font-size="11" fill="#0f172a" dominant-baseline="middle">4.7 MB</text>
+<rect x="260" y="212" width="9.1" height="16" fill="#60a5fa" rx="3"/>
+<text x="275.0621351765103" y="221.0" font-size="11" fill="#0f172a" dominant-baseline="middle">925.7 KB</text>
+<rect x="260" y="234" width="6.5" height="16" fill="#22c55e" rx="3"/>
+<text x="272.5344896631815" y="243.0" font-size="11" fill="#0f172a" dominant-baseline="middle">667.5 KB</text>
+<rect x="260" y="288" width="14" height="14" fill="#94a3b8" rx="2"/>
+<text x="280" y="299" font-size="12" fill="#334155">PLY equivalent (SH deg 3)</text>
+<rect x="500" y="288" width="14" height="14" fill="#60a5fa" rx="2"/>
+<text x="520" y="299" font-size="12" fill="#334155">Input .npz on disk</text>
+<rect x="740" y="288" width="14" height="14" fill="#22c55e" rx="2"/>
+<text x="760" y="299" font-size="12" fill="#334155">Encoded output</text>
+</svg></div>
+
+  <h2>Compression ratio vs PLY-equivalent baseline</h2>
+  <div class="panel"><svg viewBox="0 0 900 138" xmlns="http://www.w3.org/2000/svg" font-family="ui-sans-serif, system-ui">
+<text x="248" y="25.0" text-anchor="end" font-size="13" fill="#0f172a" dominant-baseline="middle">point_cloud_pp (1).npz</text>
+<rect x="260" y="12" width="560.0" height="26" fill="#6366f1" rx="3"/>
+<text x="826.0" y="25.0" font-size="12" fill="#0f172a" dominant-baseline="middle" font-weight="600">7.83×</text>
+<text x="248" y="61.0" text-anchor="end" font-size="13" fill="#0f172a" dominant-baseline="middle">point_cloud_pp (2).npz</text>
+<rect x="260" y="48" width="549.8" height="26" fill="#6366f1" rx="3"/>
+<text x="815.8415298425855" y="61.0" font-size="12" fill="#0f172a" dominant-baseline="middle" font-weight="600">7.69×</text>
+<text x="248" y="97.0" text-anchor="end" font-size="13" fill="#0f172a" dominant-baseline="middle">point_cloud_pp.npz</text>
+<rect x="260" y="84" width="514.5" height="26" fill="#6366f1" rx="3"/>
+<text x="780.4933200659289" y="97.0" font-size="12" fill="#0f172a" dominant-baseline="middle" font-weight="600">7.19×</text>
+</svg></div>
+
+  <h2>Per-file summary</h2>
+  <div class="panel">
+    <table>
+      <thead><tr>
+        <th>File</th><th class="num">Gaussians</th><th class="num">PLY equiv</th>
+        <th class="num">Input .npz</th><th class="num">Encoded</th>
+        <th class="num">Ratio vs PLY</th><th class="num">Ratio vs input</th>
+      </tr></thead>
+      <tbody>
+        <tr><td>point_cloud_pp (1).npz</td><td class='num'>165,504</td><td class='num'>49.9 MB</td><td class='num'>7.5 MB</td><td class='num'>6.4 MB</td><td class='num'><b>7.83×</b></td><td class='num'>1.18×</td></tr>
+<tr><td>point_cloud_pp (2).npz</td><td class='num'>55,581</td><td class='num'>16.7 MB</td><td class='num'>3.0 MB</td><td class='num'>2.2 MB</td><td class='num'><b>7.69×</b></td><td class='num'>1.37×</td></tr>
+<tr><td>point_cloud_pp.npz</td><td class='num'>15,556</td><td class='num'>4.7 MB</td><td class='num'>925.7 KB</td><td class='num'>667.5 KB</td><td class='num'><b>7.19×</b></td><td class='num'>1.39×</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <footer>Generated by <code>benchmark.py</code>. Self-contained — no internet required.</footer>
+</body>
+</html>

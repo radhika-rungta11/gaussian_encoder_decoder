@@ -1,5 +1,6 @@
 import os
 import struct
+import sys
 import zlib
 import numpy as np
 
@@ -75,11 +76,16 @@ def export_spz(path, scene_props, time_t=0.0):
 if __name__ == "__main__":
     npz_path = "point_cloud_pp.npz"
     fourdgs_path = "ours_cook_spinach.4dgs"
-    
-    if os.path.exists(fourdgs_path):
-        props_4dgs = load_scene_properties_from_4dgs(fourdgs_path)
-        export_spz("flamsplat/mac/out/spz/ours_reference.spz", props_4dgs)
-        
+
+    if len(sys.argv) > 1:
+        npz_path = sys.argv[1]
+
     if os.path.exists(npz_path):
         props_npz = load_scene_properties_from_npz(npz_path, decode_auxiliary_properties=True)
         export_spz("flamsplat/mac/out/spz/ours_decoded.spz", props_npz)
+    else:
+        print(f"Could not find original NPZ: {npz_path}")
+
+    if os.path.exists(fourdgs_path):
+        props_4dgs = load_scene_properties_from_4dgs(fourdgs_path)
+        export_spz("flamsplat/mac/out/spz/ours_reference.spz", props_4dgs)
