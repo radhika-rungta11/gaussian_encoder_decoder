@@ -164,7 +164,7 @@ int decoder_parse_4dgs(const uint8_t *data, size_t size,
         }
         fprintf(stderr, "  motion   shape=[%u,9] min=%.4g max=%.4g\n",
                 out->N, m_mn, m_mx);
-    }
+    }   
 
     if (read_scalar_block(&r, out->N, &out->opacity, "opacity", verbose) != 0) return -1;
     if (read_scalar_block(&r, out->N, &out->tcen,    "tcen",    verbose) != 0) return -1;
