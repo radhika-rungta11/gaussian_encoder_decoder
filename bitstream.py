@@ -6,7 +6,7 @@ class BitstreamReader:
     Used for parsing entropy-coded or bit-packed data streams.
     """
     def __init__(self, data: np.ndarray):
-        """
+        """ 
         data: uint8 numpy array
         """
         self.data = np.asarray(data, dtype=np.uint8).flatten()
