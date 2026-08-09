@@ -102,7 +102,8 @@ def load_scene_properties_from_4dgs(fourdgs_path):
 
 
 def load_scene_properties(input_path, decode_auxiliary_properties=False):
-    if input_path.endswith(".4dgs"):
+    # Accept .4dgs and .4dgs.gz transparently (loader already gzip-detects)
+    if input_path.endswith(".4dgs") or input_path.endswith(".4dgs.gz"):
         return load_scene_properties_from_4dgs(input_path)
     if input_path.endswith(".npz"):
         return load_scene_properties_from_npz(
@@ -169,8 +170,12 @@ def _read_binary_huffman_block(reader):
 
     data_len = reader.read_u32()
     payload = reader.read_bytes(data_len)
-    codec = PrefixCodec(_decode_huffman_entries(entries))
+    # eof="_EOF" tells dahuffman to recognize our 0xFFFF marker as the sentinel
+    # so it stops decoding instead of leaking the string "_EOF" into the output.
+    codec = PrefixCodec(_decode_huffman_entries(entries), eof="_EOF")
     decoded = codec.decode(payload)
+    # Defensive: drop any sentinel that may slip through from trailing padding.
+    decoded = [s for s in decoded if s != "_EOF"]
     return np.asarray(decoded, dtype=np.uint8)
 
 
@@ -184,8 +189,10 @@ def _read_binary_scalar_block(reader):
 def _unpack_rvq_indices(bitstream, num_points, num_quantizers, rvq_bit):
     required_bits = num_points * num_quantizers * rvq_bit
     bits = np.unpackbits(np.asarray(bitstream, dtype=np.uint8), bitorder="little")[:required_bits]
-    packed = np.packbits(bits.reshape(-1, rvq_bit), axis=-1, bitorder="little")
-    return packed.reshape(num_points, num_quantizers).astype(np.int32)
+    bit_matrix = bits.reshape(-1, rvq_bit).astype(np.int32)
+    weights = (1 << np.arange(rvq_bit, dtype=np.int32))
+    indices = (bit_matrix * weights[None, :]).sum(axis=1)
+    return indices.reshape(num_points, num_quantizers)
 
 
 def _read_binary_vq_block(reader, num_points):
@@ -215,24 +222,37 @@ def _sigmoid(x):
 
 
 def _derive_rgb_from_4dgs(scene):
+    """
+    Reconstruct per-Gaussian color using the baked rgb_dec MLP if it
+    is present (this is the intended path — Dynamic_C3DGS bakes a
+    12 -> 6 -> 3 sandwich MLP whose inputs are
+    [features_dc(6), tfea(3), tcen(1), tsca(1), bias=1]).
+
+    Fallback: sigmoid(features_dc[:, :3]) if rgb_dec is not present.
+    """
     if scene.features_dc is None:
         return np.ones((scene.xyz.shape[0], 3), dtype=np.float32)
 
-    # Base fallback directly from baked features.
-    rgb = _sigmoid(scene.features_dc[:, :3]).astype(np.float32)
+    fd = scene.features_dc.astype(np.float32)
 
-    if scene.rgb_decoder is None or scene.tfea is None or scene.tcen is None or scene.tsca is None:
-        return np.clip(rgb, 0.0, 1.0)
+    if (scene.rgb_decoder is not None
+            and scene.tfea is not None
+            and scene.tcen is not None
+            and scene.tsca is not None):
+        ones = np.ones((fd.shape[0], 1), dtype=np.float32)
+        mlp_input = np.concatenate(
+            [
+                fd,                                       # 6
+                scene.tfea.astype(np.float32),            # 3
+                scene.tcen[:, None].astype(np.float32),   # 1
+                scene.tsca[:, None].astype(np.float32),   # 1
+                ones,                                     # 1
+            ],
+            axis=1,
+        )
+        if mlp_input.shape[1] == 12:
+            hidden = np.maximum(mlp_input @ scene.rgb_decoder["w1"].T, 0.0)
+            rgb = _sigmoid(hidden @ scene.rgb_decoder["w2"].T).astype(np.float32)
+            return np.clip(rgb, 0.0, 1.0)
 
-    # Best-effort runtime color reconstruction using baked static features plus temporal feature channels.
-    ones = np.ones((scene.xyz.shape[0], 1), dtype=np.float32)
-    mlp_input = np.concatenate(
-        [scene.features_dc, scene.tfea, scene.tcen[:, None], scene.tsca[:, None], ones],
-        axis=1,
-    )
-    if mlp_input.shape[1] != 12:
-        return np.clip(rgb, 0.0, 1.0)
-
-    hidden = np.maximum(mlp_input @ scene.rgb_decoder["w1"].T, 0.0)
-    rgb = _sigmoid(hidden @ scene.rgb_decoder["w2"].T).astype(np.float32)
-    return np.clip(rgb, 0.0, 1.0)
+    return np.clip(_sigmoid(fd[:, :3]).astype(np.float32), 0.0, 1.0)

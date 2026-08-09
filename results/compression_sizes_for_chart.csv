@@ -1,0 +1,5 @@
+label,size_bytes,size_kb,size_mb
+PLY equivalent (SH deg 3),4915696,4800.48,4.6880
+Raw float32 attributes,1991168,1944.50,1.8989
+Input file (point_cloud_pp.npz),947886,925.67,0.9040
+Encoded output,683498,667.48,0.6518
