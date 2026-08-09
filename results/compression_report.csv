@@ -1,0 +1,11 @@
+metric,value
+input_path,point_cloud_pp.npz
+encoded_path,encoded_scene.npz
+num_gaussians,15556
+raw_float32_bytes,1991168
+ply_equivalent_bytes,4915696
+input_file_bytes,947886
+encoded_file_bytes,683498
+ratio_vs_raw_float32,2.9132
+ratio_vs_ply_equivalent,7.1920
+ratio_vs_input_file,1.3868

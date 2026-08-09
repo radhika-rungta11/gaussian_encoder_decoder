@@ -1,0 +1,14 @@
+======================================================================
+ Compression report
+======================================================================
+ Input file                             : point_cloud_pp.npz
+ Encoded output                         : encoded_scene.npz
+ Gaussians (N)                          : 15,556
+ Raw float32 attributes (loaded only)   : 1.9 MB
+ PLY-equivalent baseline (SH deg 3)     : 4.7 MB
+ Input file on disk                     : 925.7 KB
+ Encoder output on disk                 : 667.5 KB
+ Compression vs loaded float32          : 2.91x
+ Compression vs PLY-equivalent (paper)  : 7.19x
+ Compression vs input file              : 1.39x
+======================================================================
